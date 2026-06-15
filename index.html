@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1329,12 +1330,29 @@ async function initFirebase() {
 // Load data prioritizing Cloud, falling back to LocalStorage or default values
 async function loadFromCloud() {
   if (isCloudActive && window.cloudGet) {
-      const s = await window.cloudGet('slider'); if(s && s.items) sliderData = s.items;
-      const w = await window.cloudGet('wall'); if(w && w.items) wallData = w.items;
-      const m = await window.cloudGet('messages'); if(m && m.items) messagesData = m.items;
-      const ss = await window.cloudGet('secretScroll'); if(ss && ss.items) secretScrollData = ss.items;
-      const p = await window.cloudGet('polaroids'); if(p) polaroidsData = { ...polaroidsData, ...p };
-      const sec = await window.cloudGet('secretWishes'); if(sec) secretData = { ...secretData, ...sec };
+      const s = await window.cloudGet('slider'); 
+      if(s && s.items) sliderData = s.items; 
+      else { const ls = localStorage.getItem(STORAGE_KEYS.SLIDER); if(ls) { sliderData = JSON.parse(ls); saveSlider(); } }
+      
+      const w = await window.cloudGet('wall'); 
+      if(w && w.items) wallData = w.items; 
+      else { const lw = localStorage.getItem(STORAGE_KEYS.WALL); if(lw) { wallData = JSON.parse(lw); saveWall(); } }
+      
+      const m = await window.cloudGet('messages'); 
+      if(m && m.items) messagesData = m.items; 
+      else { const lm = localStorage.getItem(STORAGE_KEYS.MESSAGES); if(lm) { messagesData = JSON.parse(lm); saveMessages(); } }
+      
+      const ss = await window.cloudGet('secretScroll'); 
+      if(ss && ss.items) secretScrollData = ss.items; 
+      else { const lss = localStorage.getItem(STORAGE_KEYS.SECRET_SCROLL); if(lss) { secretScrollData = JSON.parse(lss); saveSecretScroll(); } }
+      
+      const p = await window.cloudGet('polaroids'); 
+      if(p) polaroidsData = { ...polaroidsData, ...p }; 
+      else { const lp = localStorage.getItem(STORAGE_KEYS.POLAROIDS); if(lp) { polaroidsData = JSON.parse(lp); savePolaroids(); } }
+      
+      const sec = await window.cloudGet('secretWishes'); 
+      if(sec) secretData = { ...secretData, ...sec }; 
+      else { const lsec = localStorage.getItem(STORAGE_KEYS.SECRET_WISHES); if(lsec) { secretData = JSON.parse(lsec); saveSecretWishes(); } }
   } else {
       // Pure Offline LocalStorage recovery
       const s = localStorage.getItem(STORAGE_KEYS.SLIDER); if(s) sliderData = JSON.parse(s);
