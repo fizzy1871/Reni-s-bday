@@ -470,6 +470,8 @@ body { font-family:'DM Sans',sans-serif; background:var(--cream); color:var(--te
 .msg-box-title em { color:var(--pink-rose); }
 .msg-box-sub { font-size:13px; color:var(--text-light); letter-spacing:0.08em; }
 .msg-box-wrap { max-width:680px; }
+.msg-sender-input { width:100%; background:white; border:1.5px solid var(--pink-soft); border-radius:12px; padding:16px 28px; font-family:'DM Sans',sans-serif; font-size:15px; color:var(--text-dark); outline:none; margin-bottom:12px; transition:border-color 0.3s, box-shadow 0.3s; }
+.msg-sender-input:focus { border-color:var(--pink-rose); box-shadow: 0 4px 16px rgba(212,120,154,0.1); }
 .msg-textarea { width:100%; min-height:180px; background:white; border:1.5px solid var(--pink-soft); border-radius:20px; padding:24px 28px; font-family:'Cormorant Garamond',serif; font-size:18px; font-style:italic; color:var(--text-dark); line-height:1.75; resize:vertical; outline:none; transition:border-color 0.3s, box-shadow 0.3s; scrollbar-width: thin; scrollbar-color: var(--pink-soft) transparent; }
 .msg-textarea::-webkit-scrollbar { width: 8px; }
 .msg-textarea::-webkit-scrollbar-track { background: transparent; }
@@ -984,6 +986,7 @@ body { font-family:'DM Sans',sans-serif; background:var(--cream); color:var(--te
       </div>
 
       <div class="msg-box-wrap">
+        <input type="text" id="msg-sender-name" class="msg-sender-input" placeholder="Your Name (optional)..." />
         <textarea class="msg-textarea" id="msg-input" maxlength="1500" placeholder="Write something lovely..." oninput="updateCharCount()"></textarea>
         
         <p class="media-title">A moment to remember</p>
@@ -1330,29 +1333,110 @@ async function initFirebase() {
 // Load data prioritizing Cloud, falling back to LocalStorage or default values
 async function loadFromCloud() {
   if (isCloudActive && window.cloudGet) {
+      
+      // --- SMART MERGE: SLIDER ---
       const s = await window.cloudGet('slider'); 
-      if(s && s.items) sliderData = s.items; 
-      else { const ls = localStorage.getItem(STORAGE_KEYS.SLIDER); if(ls) { sliderData = JSON.parse(ls); saveSlider(); } }
+      const ls = localStorage.getItem(STORAGE_KEYS.SLIDER);
+      let localSlider = ls ? JSON.parse(ls) : sliderData;
+      if(s && s.items) {
+         let needCloudUpdate = false;
+         s.items.forEach((cloudItem, i) => {
+             // If local has an image, but cloud is blank, push local to cloud!
+             if (localSlider[i] && localSlider[i].src && !cloudItem.src) {
+                 s.items[i].src = localSlider[i].src;
+                 s.items[i].label = localSlider[i].label;
+                 needCloudUpdate = true;
+             }
+         });
+         sliderData = s.items;
+         if (needCloudUpdate) saveSlider();
+      } else { 
+         sliderData = localSlider; 
+         saveSlider(); 
+      }
       
+      // --- SMART MERGE: WALL ---
       const w = await window.cloudGet('wall'); 
-      if(w && w.items) wallData = w.items; 
-      else { const lw = localStorage.getItem(STORAGE_KEYS.WALL); if(lw) { wallData = JSON.parse(lw); saveWall(); } }
+      const lw = localStorage.getItem(STORAGE_KEYS.WALL);
+      let localWall = lw ? JSON.parse(lw) : wallData;
+      if(w && w.items) {
+         let needCloudUpdate = false;
+         let mergedWall = [];
+         const maxLen = Math.max(w.items.length, localWall.length);
+         for(let i = 0; i < maxLen; i++) {
+             let cItem = w.items[i];
+             let lItem = localWall[i];
+             if (lItem && lItem.src && (!cItem || !cItem.src)) {
+                 mergedWall.push(lItem);
+                 needCloudUpdate = true;
+             } else if (cItem) {
+                 mergedWall.push(cItem);
+             } else if (lItem) {
+                 mergedWall.push(lItem);
+                 needCloudUpdate = true;
+             }
+         }
+         wallData = mergedWall;
+         if (needCloudUpdate) saveWall();
+      } else { 
+         wallData = localWall; 
+         saveWall(); 
+      }
       
+      // --- SMART MERGE: MESSAGES ---
       const m = await window.cloudGet('messages'); 
-      if(m && m.items) messagesData = m.items; 
-      else { const lm = localStorage.getItem(STORAGE_KEYS.MESSAGES); if(lm) { messagesData = JSON.parse(lm); saveMessages(); } }
+      const lm = localStorage.getItem(STORAGE_KEYS.MESSAGES);
+      let localMessages = lm ? JSON.parse(lm) : messagesData;
+      if(m && m.items) {
+          let combined = [...m.items, ...localMessages];
+          let unique = [];
+          let ids = new Set();
+          for(let msg of combined) {
+              if(!ids.has(msg.id)) { ids.add(msg.id); unique.push(msg); }
+          }
+          messagesData = unique.sort((a,b) => parseInt(b.id) - parseInt(a.id));
+          if(messagesData.length > m.items.length) saveMessages();
+      } else { 
+          messagesData = localMessages; 
+          saveMessages(); 
+      }
       
+      // --- SMART MERGE: SECRET SCROLL ---
       const ss = await window.cloudGet('secretScroll'); 
       if(ss && ss.items) secretScrollData = ss.items; 
       else { const lss = localStorage.getItem(STORAGE_KEYS.SECRET_SCROLL); if(lss) { secretScrollData = JSON.parse(lss); saveSecretScroll(); } }
       
+      // --- SMART MERGE: POLAROIDS ---
       const p = await window.cloudGet('polaroids'); 
-      if(p) polaroidsData = { ...polaroidsData, ...p }; 
-      else { const lp = localStorage.getItem(STORAGE_KEYS.POLAROIDS); if(lp) { polaroidsData = JSON.parse(lp); savePolaroids(); } }
+      const lp = localStorage.getItem(STORAGE_KEYS.POLAROIDS);
+      let localP = lp ? JSON.parse(lp) : polaroidsData;
+      if(p) {
+          let needCloudUpdate = false;
+          if (localP.poemSrc && !p.poemSrc) { p.poemSrc = localP.poemSrc; needCloudUpdate = true; }
+          if (localP.knowSrc && !p.knowSrc) { p.knowSrc = localP.knowSrc; needCloudUpdate = true; }
+          if (localP.giftSrc && !p.giftSrc) { p.giftSrc = localP.giftSrc; needCloudUpdate = true; }
+          polaroidsData = { ...localP, ...p };
+          if (needCloudUpdate) savePolaroids();
+      } else { 
+         polaroidsData = localP; 
+         savePolaroids(); 
+      }
       
+      // --- SMART MERGE: WISHES ---
       const sec = await window.cloudGet('secretWishes'); 
-      if(sec) secretData = { ...secretData, ...sec }; 
-      else { const lsec = localStorage.getItem(STORAGE_KEYS.SECRET_WISHES); if(lsec) { secretData = JSON.parse(lsec); saveSecretWishes(); } }
+      const lsec = localStorage.getItem(STORAGE_KEYS.SECRET_WISHES);
+      let localSec = lsec ? JSON.parse(lsec) : secretData;
+      if(sec) {
+          let needCloudUpdate = false;
+          if (localSec.hafiz.text && !sec.hafiz.text) { sec.hafiz = localSec.hafiz; needCloudUpdate = true; }
+          if (localSec.reni.text && !sec.reni.text) { sec.reni = localSec.reni; needCloudUpdate = true; }
+          secretData = { ...localSec, ...sec };
+          if (needCloudUpdate) saveSecretWishes();
+      } else { 
+         secretData = localSec; 
+         saveSecretWishes(); 
+      }
+      
   } else {
       // Pure Offline LocalStorage recovery
       const s = localStorage.getItem(STORAGE_KEYS.SLIDER); if(s) sliderData = JSON.parse(s);
@@ -1367,7 +1451,7 @@ async function loadFromCloud() {
   if(polaroidsData.poemSrc) document.getElementById('poem-polaroid-img').src = polaroidsData.poemSrc;
   if(polaroidsData.knowSrc) {
      const knowImg = document.getElementById('know-photo-img');
-     knowImg.src = knowImg.src = polaroidsData.knowSrc;
+     knowImg.src = polaroidsData.knowSrc;
      knowImg.style.display = 'block';
      document.getElementById('know-photo-empty').style.display = 'none';
   }
@@ -1907,7 +1991,9 @@ function updateCharCount() {
 
 function sendMessage() {
   const input = document.getElementById('msg-input');
+  const nameInput = document.getElementById('msg-sender-name');
   const text = input.value.trim();
+  const senderName = nameInput.value.trim() || 'Anonymous';
   
   if(!text && !currentMsgMedia) return;
   
@@ -1915,6 +2001,7 @@ function sendMessage() {
   const newMsg = {
       id: Date.now().toString(),
       text: text,
+      sender: senderName,
       mediaSrc: currentMsgMedia,
       mediaType: currentMsgMediaType,
       dateStr: now.toLocaleDateString('en-GB'),
@@ -1926,6 +2013,7 @@ function sendMessage() {
   saveMessages();
   
   input.value = '';
+  nameInput.value = '';
   currentMsgMedia = null;
   currentMsgMediaType = null;
   document.getElementById('media-upload-content').style.display = 'flex';
@@ -1963,14 +2051,95 @@ function renderMessages() {
         }
       }
 
+      const displaySender = msg.sender ? msg.sender : 'Anonymous';
+
       card.innerHTML = `
         ${msg.text ? `<p class="sent-text">"${msg.text}"</p>` : ''}
         ${mediaHTML}
-        <p class="sent-meta">${msg.dateStr} • ${msg.timeStr}</p>
+        <p class="sent-meta"><strong>${displaySender}</strong> • ${msg.dateStr} • ${msg.timeStr}</p>
         <button class="sent-delete" onclick="deleteMessage('${msg.id}')">&#10005;</button>
       `;
       wall.appendChild(card);
   });
+}
+
+// TINY CSV PARSER
+function parseCSV(str) {
+    const arr = [];
+    let quote = false;
+    let col, c;
+    for (let row = col = c = 0; c < str.length; c++) {
+        let cc = str[c], nc = str[c+1];
+        arr[row] = arr[row] || [];
+        arr[row][col] = arr[row][col] || '';
+        if (cc == '"' && quote && nc == '"') { arr[row][col] += cc; ++c; continue; }
+        if (cc == '"') { quote = !quote; continue; }
+        if (cc == ',' && !quote) { ++col; continue; }
+        if (cc == '\r' && nc == '\n' && !quote) { ++row; col = 0; ++c; continue; }
+        if (cc == '\n' && !quote) { ++row; col = 0; continue; }
+        if (cc == '\r' && !quote) { ++row; col = 0; continue; }
+        arr[row][col] += cc;
+    }
+    return arr;
+}
+
+// GOOGLE SHEETS AUTO-IMPORTER (Runs silently in the background)
+async function autoSyncGoogleSheet() {
+  const sheetId = '1rA9ABWcP1mgznyYqf8fbifJCQzrsHR0V387-5b7ENVI';
+  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
+  
+  try {
+    const res = await fetch(url);
+    if(!res.ok) return;
+    const text = await res.text();
+    const rows = parseCSV(text);
+    
+    let importCount = 0;
+    const now = new Date();
+    
+    // Auto-detect columns (Google Forms usually puts Timestamp in Col 0, Name in Col 1, Wish in Col 2)
+    let nameCol = 0;
+    let wishCol = 1;
+    
+    if (rows.length > 0) {
+        const header = rows[0].map(h => h.toLowerCase());
+        if (header.includes('timestamp') || header[0].includes('waktu')) {
+            nameCol = 1; 
+            wishCol = 2; 
+        }
+    }
+    
+    // Start at row 1 (skipping header row)
+    for(let i = 1; i < rows.length; i++) {
+       if(rows[i].length > wishCol && rows[i][wishCol].trim() !== '') {
+           const name = rows[i][nameCol] ? rows[i][nameCol].trim() : 'Anonymous';
+           const wish = rows[i][wishCol].trim();
+           
+           // Prevent exact duplicate wishes
+           if(!messagesData.some(m => m.text === wish)) {
+               messagesData.push({
+                  id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+                  text: wish,
+                  sender: name,
+                  mediaSrc: null,
+                  mediaType: null,
+                  dateStr: now.toLocaleDateString('en-GB'),
+                  timeStr: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+               });
+               importCount++;
+           }
+       }
+    }
+    
+    if(importCount > 0) {
+        messagesData.sort((a,b) => parseInt(b.id) - parseInt(a.id)); 
+        renderMessages();
+        saveMessages();
+        console.log(`Auto-synced ${importCount} new wishes from Google Sheets!`);
+    }
+  } catch (err) {
+    console.warn("Auto-sync sheet failed, likely due to connection:", err);
+  }
 }
 
 function runStickman() {
@@ -2150,6 +2319,7 @@ window.onload = async () => {
   createPetals();
   await loadFromCloud();
   await initFirebase();
+  await autoSyncGoogleSheet(); // Auto-pulls any new wishes from your specific Google Sheet link!
 };
 </script>
 </body>
