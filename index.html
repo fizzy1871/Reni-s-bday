@@ -469,8 +469,11 @@ body { font-family:'DM Sans',sans-serif; background:var(--cream); color:var(--te
 .msg-box-title em { color:var(--pink-rose); }
 .msg-box-sub { font-size:13px; color:var(--text-light); letter-spacing:0.08em; }
 .msg-box-wrap { max-width:680px; }
-.msg-textarea { width:100%; min-height:180px; background:white; border:1.5px solid var(--pink-soft); border-radius:20px; padding:24px 28px; font-family:'Cormorant Garamond',serif; font-size:18px; font-style:italic; color:var(--text-dark); line-height:1.75; resize:vertical; outline:none; transition:border-color 0.3s; }
-.msg-textarea:focus { border-color:var(--pink-rose); }
+.msg-textarea { width:100%; min-height:180px; background:white; border:1.5px solid var(--pink-soft); border-radius:20px; padding:24px 28px; font-family:'Cormorant Garamond',serif; font-size:18px; font-style:italic; color:var(--text-dark); line-height:1.75; resize:vertical; outline:none; transition:border-color 0.3s, box-shadow 0.3s; scrollbar-width: thin; scrollbar-color: var(--pink-soft) transparent; }
+.msg-textarea::-webkit-scrollbar { width: 8px; }
+.msg-textarea::-webkit-scrollbar-track { background: transparent; }
+.msg-textarea::-webkit-scrollbar-thumb { background-color: var(--pink-soft); border-radius: 10px; }
+.msg-textarea:focus { border-color:var(--pink-rose); box-shadow: 0 4px 16px rgba(212,120,154,0.1); }
 .msg-textarea::placeholder { color:var(--brown-light); font-style:italic; }
 .msg-actions { display:flex; justify-content:space-between; align-items:center; margin-top:14px; }
 .char-count { font-size:12px; color:var(--text-light); }
@@ -724,9 +727,9 @@ body { font-family:'DM Sans',sans-serif; background:var(--cream); color:var(--te
   <div class="db-config-box">
     <h3 class="db-config-title">Connect Cloud Database ☁️</h3>
     <p class="db-config-desc">
-      To sync your changes instantly with other devices and across GitHub deployments, paste your <b>Firebase Config JSON Object</b> here. (Leave empty to keep using Local Browser Storage).
+      To sync your changes instantly, paste your <b>Firebase Config code block</b> directly here. The smart engine automatically cleans and matches standard JS formats!
     </p>
-    <textarea class="db-input-field" id="db-firebase-config-input" placeholder='{&#10;  "apiKey": "...",&#10;  "authDomain": "...",&#10;  "projectId": "...",&#10;  "storageBucket": "...",&#10;  "messagingSenderId": "...",&#10;  "appId": "..."&#10;}'></textarea>
+    <textarea class="db-input-field" id="db-firebase-config-input" placeholder='const firebaseConfig = {&#10;  apiKey: "...",&#10;  authDomain: "...",&#10;  projectId: "...",&#10;  ...&#10;};'></textarea>
     <div class="db-action-row">
       <button class="btn-secondary" onclick="closeDatabaseConfig()" style="padding:8px 16px; margin:0;">Cancel</button>
       <button class="msg-send-btn" onclick="saveDatabaseConfig()" style="padding:8px 20px;">Link & Refresh ⚡</button>
@@ -919,14 +922,14 @@ body { font-family:'DM Sans',sans-serif; background:var(--cream); color:var(--te
               <div class="acc-icon">🪐</div>
               <div class="acc-text">
                 <h4 class="acc-title">Cosmic Alignment</h4>
-                <p class="acc-sub">A graceful personality and aura (Click to reveal details)...</p>
+                <p class="acc-sub">A graceful personality and aura (GEMINI)(Click to reveal details)...</p>
               </div>
               <div class="acc-indicator">✦</div>
             </div>
             <div class="acc-body">
               <div class="acc-content-inner">
                 <div class="acc-content">
-                  As an ISFJ, she is incredibly organized, deeply caring, and brings a comforting, grounded presence to everyone she loves. Her aura aligns perfectly with peace and tranquility.
+                  As an INFJ, she is very organized, deeply caring, and brings a calm, peaceful feeling to everyone she loves. Her aura is full of peace and quiet. This is honestly a miracle, because her Gemini side is like two hyper monkeys inside her head, constantly arguing about what random new thing to focus on next.
                 </div>
               </div>
             </div>
@@ -944,7 +947,7 @@ body { font-family:'DM Sans',sans-serif; background:var(--cream); color:var(--te
             <div class="acc-body">
               <div class="acc-content-inner">
                 <div class="acc-content">
-                  She loves the comfort of a matcha latte, the soft draping of a pashmina, and the quiet magic of golden hour light streaming through the window, bringing a warm aesthetic to life.
+                  She loves the comfort of a matcha latte or cup of aren latte with the quiet magic of golden hour light streaming through the window, bringing a warm aesthetic to life.
                 </div>
               </div>
             </div>
@@ -962,7 +965,7 @@ body { font-family:'DM Sans',sans-serif; background:var(--cream); color:var(--te
             <div class="acc-body">
               <div class="acc-content-inner">
                 <div class="acc-content">
-                  She believes in spreading love through small, thoughtful gestures, cherishing her friendships forever, and moving gracefully forward with hope, peace, and love in her heart.
+                  She believes in spreading kindness through small, thoughtful gestures, cherishing her friendships forever, and moving gracefully forward with hope, peace, and love in her heart. She had her experienced, and shew would like to create a better one.
                 </div>
               </div>
             </div>
@@ -980,21 +983,24 @@ body { font-family:'DM Sans',sans-serif; background:var(--cream); color:var(--te
       </div>
 
       <div class="msg-box-wrap">
-        <textarea class="msg-textarea" id="msg-input" placeholder="Write something lovely..." oninput="updateCharCount()"></textarea>
+        <textarea class="msg-textarea" id="msg-input" maxlength="1500" placeholder="Write something lovely..." oninput="updateCharCount()"></textarea>
         
         <p class="media-title">A moment to remember</p>
-        <div class="media-upload-box" onclick="document.getElementById('msg-media-upload').click()">
+        <div class="media-upload-box" onclick="triggerMsgMediaUpload(event)">
           <div id="media-upload-content" class="media-upload-text">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke-linecap="round" stroke-linejoin="round"/></svg>
             <span>+ click to add photo or video</span>
           </div>
           <input type="file" id="msg-media-upload" accept="image/*,video/*" style="display:none;" onchange="handleMsgMedia(event)"/>
-          <img id="msg-media-preview-img" src="" style="display:none; max-height:160px; border-radius:12px; object-fit:cover;"/>
-          <video id="msg-media-preview-vid" src="" style="display:none; max-height:160px; border-radius:12px;" controls></video>
+          <div id="msg-media-preview-wrapper" style="display:none; position:relative; width: 100%; max-width: 280px; margin: auto;">
+             <button id="msg-media-remove" onclick="removeMsgMedia(event)" style="position:absolute; top:-10px; right:-10px; background:var(--bow-red); color:white; border:none; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size:14px; z-index:10; box-shadow:0 4px 8px rgba(0,0,0,0.2); display:flex; align-items:center; justify-content:center; transition:transform 0.2s;">✕</button>
+             <img id="msg-media-preview-img" src="" style="display:none; width:100%; max-height:160px; border-radius:12px; object-fit:cover; pointer-events:none; border:2px solid var(--pink-soft);"/>
+             <video id="msg-media-preview-vid" src="" style="display:none; width:100%; max-height:160px; border-radius:12px; border:2px solid var(--pink-soft);" controls onclick="event.stopPropagation()"></video>
+          </div>
         </div>
 
         <div class="msg-actions">
-          <span class="char-count" id="char-count">0 characters</span>
+          <span class="char-count" id="char-count">0 / 1500 characters</span>
           <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
             <button class="btn-secondary" onclick="goToLayer('layer-secret-lock')" style="padding:11px 24px; font-size:12px; margin:0;">Secret Chapter 🗝️</button>
             <button class="msg-send-btn" onclick="sendMessage()">Send Wish ✦</button>
@@ -1197,6 +1203,16 @@ let user = null;
 let appId = 'birthday-reni-amalia';
 let isCloudActive = false;
 
+// HARDCODED FIREBASE CONFIGURATION (Makes it work perfectly on any device without copying code!)
+const __firebase_config = JSON.stringify({
+  apiKey: "AIzaSyAwDUe5qZ5JFOHwO6GyFHaU_cdOvTM5qoI",
+  authDomain: "recan-s-bday.firebaseapp.com",
+  projectId: "recan-s-bday",
+  storageBucket: "recan-s-bday.firebasestorage.app",
+  messagingSenderId: "582034907246",
+  appId: "1:582034907246:web:bd6c6dd41264f623a3c67f"
+});
+
 // Keys for browser LocalStorage fallbacks
 const STORAGE_KEYS = {
   SLIDER: 'hbr_slider_data_v2',
@@ -1229,21 +1245,19 @@ let secretData = {
 
 // Try to initialize Firebase using saved configurations
 async function initFirebase() {
-  try {
-      // Fetch dynamic configuration pasted via user interface or environment variables
-      let configStr = localStorage.getItem(STORAGE_KEYS.FIREBASE_CONFIG);
-      
-      // Fallback fallback: check window configuration stubs
-      if (!configStr && typeof __firebase_config !== 'undefined') {
-          configStr = __firebase_config;
-      }
-      
-      if (!configStr) {
-          console.log("No Firebase config detected. Running on local browser database.");
-          updateStorageIndicator(false);
-          return;
-      }
+  let configStr = localStorage.getItem(STORAGE_KEYS.FIREBASE_CONFIG);
+  
+  if (!configStr && typeof __firebase_config !== 'undefined') {
+      configStr = __firebase_config;
+  }
+  
+  if (!configStr) {
+      console.log("No Firebase config detected. Running on local browser database.");
+      updateStorageIndicator(false);
+      return;
+  }
 
+  try {
       const firebaseConfig = JSON.parse(configStr);
 
       const { initializeApp } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js");
@@ -1261,26 +1275,54 @@ async function initFirebase() {
       updateStorageIndicator(true);
 
       // Set up global fast cloud storage pipelines
+      let permissionErrorShown = false;
+
       window.cloudSet = async (docName, data) => {
-          if(!user) return;
-          try { await setDoc(doc(db, 'birthdays', appId, 'data', docName), data); } 
-          catch(e) { console.error("Cloud Save failed:", e); }
+          if(!user || !isCloudActive) return;
+          try { 
+              await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'appData', docName), data); 
+          } 
+          catch(e) { 
+              console.error("Cloud Save failed:", e); 
+              if (e.code === 'permission-denied' && !permissionErrorShown) {
+                  permissionErrorShown = true;
+                  isCloudActive = false;
+                  updateStorageIndicator(false);
+                  showModal("Firebase blocked the save! Go to Firebase -> Firestore -> Rules and change it to 'allow read, write: if true;'");
+              }
+          }
       };
 
       window.cloudGet = async (docName) => {
           if(!user) return null;
           try {
-              const d = await getDoc(doc(db, 'birthdays', appId, 'data', docName));
+              const d = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'appData', docName));
               return d.exists() ? d.data() : null;
-          } catch(e) { return null; }
+          } catch(e) { 
+              console.error("Cloud Load failed:", e);
+              if (e.code === 'permission-denied' && !permissionErrorShown) {
+                  permissionErrorShown = true;
+                  isCloudActive = false; // switch to local backup mode
+                  updateStorageIndicator(false);
+                  setTimeout(() => showModal("Firebase blocked access! Go to Firebase -> Firestore -> Rules and change it to 'allow read, write: if true;'"), 1500);
+              }
+              return null; 
+          }
       };
 
       // Pull down updated database info on load
       await loadFromCloud();
 
   } catch (err) {
-      console.warn("Could not connect to Firebase database. Reverting to Offline Local Database.", err);
+      console.warn("Could not connect to Firebase database:", err);
       updateStorageIndicator(false);
+      
+      // Explicit error messaging so you know exactly what failed
+      if (err.code === 'auth/operation-not-allowed') {
+          setTimeout(() => showModal("Cloud Connection Failed: You need to enable 'Anonymous' in Firebase Authentication settings!"), 2000);
+      } else if (err.code) {
+          setTimeout(() => showModal("Cloud Connection Failed: " + err.message), 2000);
+      }
   }
 }
 
@@ -1307,7 +1349,7 @@ async function loadFromCloud() {
   if(polaroidsData.poemSrc) document.getElementById('poem-polaroid-img').src = polaroidsData.poemSrc;
   if(polaroidsData.knowSrc) {
      const knowImg = document.getElementById('know-photo-img');
-     knowImg.src = polaroidsData.knowSrc;
+     knowImg.src = knowImg.src = polaroidsData.knowSrc;
      knowImg.style.display = 'block';
      document.getElementById('know-photo-empty').style.display = 'none';
   }
@@ -1381,6 +1423,7 @@ function closeDatabaseConfig() {
   document.getElementById('db-config-modal').classList.remove('open');
 }
 
+// UPGRADED DYNAMIC CONTEXT PARSER
 function saveDatabaseConfig() {
   const valueStr = document.getElementById('db-firebase-config-input').value.trim();
   if(!valueStr) {
@@ -1391,13 +1434,30 @@ function saveDatabaseConfig() {
   }
   
   try {
-    // Validate syntax
-    JSON.parse(valueStr);
-    localStorage.setItem(STORAGE_KEYS.FIREBASE_CONFIG, valueStr);
-    showModal("Perfect! Configuration linked. Refreshing connection...");
+    // Extract content dynamically inside first { and last }
+    const firstBrace = valueStr.indexOf('{');
+    const lastBrace = valueStr.lastIndexOf('}');
+    if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
+      throw new Error("No brackets found");
+    }
+    
+    // Grab the inner configuration object
+    const cleanStr = valueStr.substring(firstBrace, lastBrace + 1);
+    
+    // Use a robust JavaScript evaluator to handle unquoted keys and single quotes natively,
+    // overriding invisible spaces or weird characters effortlessly.
+    const parsed = new Function("return " + cleanStr)();
+    
+    if (!parsed.apiKey || !parsed.projectId) {
+      throw new Error("Missing critical keys (apiKey or projectId)");
+    }
+    
+    // Save standard valid JSON configuration back to storage
+    localStorage.setItem(STORAGE_KEYS.FIREBASE_CONFIG, JSON.stringify(parsed));
+    showModal("Success! Your database configuration was linked successfully. Refreshing connection...");
     setTimeout(() => window.location.reload(), 1200);
   } catch (e) {
-    showModal("Invalid JSON. Please ensure you copied the complete config brackets { ... } correctly!");
+    showModal("Formatting Error! The configuration could not be processed. Please ensure the brackets { ... } are copied correctly.");
   }
 }
 
@@ -1569,6 +1629,9 @@ function initGallery() {
   setTimeout(updateSliderEffect, 50);
   renderWall();
 }
+
+let activeWallIndex = null;
+let activeSliderIndex = null;
 
 function handleSlideClick(index) {
   if(sliderData[index].src) {
@@ -1777,6 +1840,23 @@ function toggleAccordion(element) {
 let currentMsgMedia = null;
 let currentMsgMediaType = null;
 
+function triggerMsgMediaUpload(event) {
+  // Prevent opening the file dialog if the user is interacting with the video controls or removing the image
+  if (event.target.closest('#msg-media-preview-wrapper')) return;
+  document.getElementById('msg-media-upload').click();
+}
+
+function removeMsgMedia(event) {
+  event.stopPropagation();
+  currentMsgMedia = null;
+  currentMsgMediaType = null;
+  document.getElementById('msg-media-preview-wrapper').style.display = 'none';
+  document.getElementById('media-upload-content').style.display = 'flex';
+  document.getElementById('msg-media-preview-img').src = '';
+  document.getElementById('msg-media-preview-vid').src = '';
+  document.getElementById('msg-media-upload').value = '';
+}
+
 function handleMsgMedia(event) {
   const file = event.target.files[0];
   if(!file) return;
@@ -1787,6 +1867,8 @@ function handleMsgMedia(event) {
       currentMsgMediaType = isVideo ? 'video' : 'image';
       
       document.getElementById('media-upload-content').style.display = 'none';
+      document.getElementById('msg-media-preview-wrapper').style.display = 'block';
+      
       if(isVideo) {
           document.getElementById('msg-media-preview-vid').src = base64;
           document.getElementById('msg-media-preview-vid').style.display = 'block';
@@ -1797,11 +1879,12 @@ function handleMsgMedia(event) {
           document.getElementById('msg-media-preview-vid').style.display = 'none';
       }
   });
+  event.target.value = ''; // Reset input to allow re-uploading the same file if needed
 }
 
 function updateCharCount() {
   const input = document.getElementById('msg-input');
-  document.getElementById('char-count').innerText = `${input.value.length} characters`;
+  document.getElementById('char-count').innerText = `${input.value.length} / 1500 characters`;
 }
 
 function sendMessage() {
@@ -1828,6 +1911,7 @@ function sendMessage() {
   currentMsgMedia = null;
   currentMsgMediaType = null;
   document.getElementById('media-upload-content').style.display = 'flex';
+  document.getElementById('msg-media-preview-wrapper').style.display = 'none';
   document.getElementById('msg-media-preview-img').style.display = 'none';
   document.getElementById('msg-media-preview-vid').style.display = 'none';
   document.getElementById('msg-media-upload').value = '';
@@ -1855,9 +1939,9 @@ function renderMessages() {
       let mediaHTML = '';
       if (msg.mediaSrc) {
         if (msg.mediaType === 'image') {
-            mediaHTML = `<img src="${msg.mediaSrc}" style="width:100%; border-radius:12px; margin-top:12px; object-fit:cover;" />`;
+            mediaHTML = `<img src="${msg.mediaSrc}" style="width:100%; max-height: 360px; border-radius:12px; margin-top:12px; object-fit:contain; background: var(--cream-dark);" />`;
         } else if (msg.mediaType === 'video') {
-            mediaHTML = `<video src="${msg.mediaSrc}" controls style="width:100%; border-radius:12px; margin-top:12px;"></video>`;
+            mediaHTML = `<video src="${msg.mediaSrc}" controls style="width:100%; max-height: 360px; border-radius:12px; margin-top:12px; background: black;"></video>`;
         }
       }
 
@@ -2046,9 +2130,7 @@ function lockWish(btn, who) {
 // INITIALIZE WINDOW APP ONLOAD
 window.onload = async () => {
   createPetals();
-  // Check for local browser saved states first so load speed is lightning fast!
   await loadFromCloud();
-  // Attempt Cloud Firebase Database connection (will transition seamlessly on success)
   await initFirebase();
 };
 </script>
